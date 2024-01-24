@@ -1,4 +1,8 @@
-# rgrep
+# rgrep (CURRENTLY STILL IN PROGRESS)
 Rust Implementation of Grep
 
-## CURRENTLY STILL IN PROGRESS 
+## Usage
+To run rgrep please run
+```cargo run --release "mode" "[Rr]egex" "path/to/directory"```
+
+
