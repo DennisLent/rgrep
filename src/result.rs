@@ -1,9 +1,10 @@
 use std::fmt;
 use std::path::PathBuf;
 
-//class used to envelope the result which will display the requested lines
+// class used to envelope the result which will display the requested lines
+// this class is used for recursive search as it has to find the lines from the content
 #[derive(Debug)]
-pub struct Result<'a> {
+pub struct ResultDirectory<'a> {
     pub start: usize,
     pub end: usize,
     pub content: &'a Vec<u8>,
@@ -11,7 +12,7 @@ pub struct Result<'a> {
     pub count: usize,
 }
 
-impl<'a> fmt::Display for Result<'a> {
+impl<'a> fmt::Display for ResultDirectory<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         //index for where a new line starts
         //search content to find \n and increment by 1 as we need the next character
@@ -35,6 +36,30 @@ impl<'a> fmt::Display for Result<'a> {
             self.count,
             self.path,
             String::from_utf8_lossy(&self.content[line_start..line_end])
+        )?;
+
+        Ok(())
+    }
+}
+
+// class used to envelope the result which will display the requested lines
+// this class is used for single files, as it can just take the lines to print
+#[derive(Debug)]
+pub struct ResultFile<'a> {
+    pub line: &'a String,
+    pub path: &'a PathBuf,
+    pub count: usize,
+}
+
+impl<'a> fmt::Display for ResultFile<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        //print line that contains regex pattern
+        writeln!(
+            f,
+            "[{}] @ {:?}: {}",
+            self.count,
+            self.path,
+            self.line
         )?;
 
         Ok(())

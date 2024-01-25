@@ -3,7 +3,7 @@ use regex::bytes::Regex;
 use std::path::PathBuf;
 
 mod grep;
-use grep::grep_rayon;
+use grep::{grep_rayon_directory, grep_rayon_file};
 mod result;
 
 #[derive(Debug)]
@@ -65,7 +65,9 @@ impl Args {
                 .add_argument("path", List, "Path to file or directory")
                 .required();
 
-            parser.refer(&mut args.recursive).add_option(&["-r"], StoreTrue, "Search a directory");
+            parser
+                .refer(&mut args.recursive)
+                .add_option(&["-r"], StoreTrue, "Search a directory");
 
             parser.refer(&mut args.filename_only).add_option(
                 &["-l"],
@@ -101,7 +103,6 @@ impl Args {
 
         args
     }
-
 }
 
 fn main() {
@@ -109,7 +110,7 @@ fn main() {
 
     println!("{:?}", args);
 
-    if args.paths.is_empty() || args.regex.is_empty(){
+    if args.paths.is_empty() || args.regex.is_empty() {
         println!("Regex pattern and Path are necessary");
     }
 
@@ -123,4 +124,17 @@ fn main() {
         // Take all paths from the command line arguments, and map the paths to create PathBufs
         args.paths.iter().map(PathBuf::from).collect()
     };
+
+    //match args to determine the function
+    match (
+        args.recursive,
+        args.filename_only,
+        args.linecount,
+        args.linenumbers,
+        args.inverse,
+        args.context_lines,
+    ) {
+        (true, _, _, _, _, _) => grep_rayon_directory(paths, &regex),
+        (_, _, _, _, _, _) => grep_rayon_file(paths, &regex),
+    }
 }
