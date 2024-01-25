@@ -8,6 +8,6 @@ To run rgrep please run
 ## Functionalities to implement
 - -r recursive search for directories
 - -l print filenames only
-- -c print count of lines wuith matching criteria
+- -c print count of lines with matching criteria
 - -v print lines that are not matching (inverse)
 - -A print n lines after matches

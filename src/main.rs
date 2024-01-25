@@ -8,9 +8,6 @@ mod result;
 
 #[derive(Debug)]
 struct Args {
-    // mode to use
-    mode: String,
-
     // The regex pattern provided
     regex: String,
 
@@ -19,30 +16,48 @@ struct Args {
 
     // determine if it will be a search in a directory or a file
     recursive: bool,
+
+    // print filenames only
+    filename_only: bool,
+
+    // print lines and line numbers
+    linenumbers: bool,
+
+    // print only the count of matching lines
+    linecount: bool,
+
+    // print lines that are not matching
+    inverse: bool,
+
+    // how many lines to print after the match
+    context_lines: Option<usize>,
 }
 
 impl Args {
     //function to parse arguments from the command line and store them in a struct
     fn parse() -> Args {
+        // intialize an empty argument struct
         let mut args = Args {
-            mode: String::new(),
             regex: String::new(),
             paths: Vec::new(),
             recursive: false,
+            filename_only: false,
+            linenumbers: false,
+            linecount: false,
+            inverse: false,
+            context_lines: None,
         };
 
-        {
-            let mut parser = ArgumentParser::new();
-            parser.set_description("A simple grep tool built uing Rust");
+        let mut lines: usize = 0;
 
-            parser
-                .refer(&mut args.mode)
-                .add_argument("mode", Store, "yada yada")
-                .required();
+        {
+            // check all the options to create the arguments struct
+            let mut parser = ArgumentParser::new();
+            parser.set_description("===== A simple grep tool built uing Rust =====");
 
             parser
                 .refer(&mut args.regex)
-                .add_argument("regex pattern", Store, "Regex pattern to search for")
+                .add_argument("regexPattern", Store, "Regex pattern to search for")
                 .required();
 
             parser
@@ -50,17 +65,53 @@ impl Args {
                 .add_argument("path", List, "Path to file or directory")
                 .required();
 
-            parser.parse_args_or_exit();
+            parser.refer(&mut args.recursive).add_option(&["-r"], StoreTrue, "Search a directory");
 
+            parser.refer(&mut args.filename_only).add_option(
+                &["-l"],
+                StoreTrue,
+                "Print filenames only",
+            );
+
+            parser.refer(&mut args.linenumbers).add_option(
+                &["-n"],
+                StoreTrue,
+                "Print lines with match and linenumbers",
+            );
+
+            parser.refer(&mut args.linecount).add_option(
+                &["-c"],
+                StoreTrue,
+                "Print count of lines with matching criteria",
+            );
+
+            parser.refer(&mut args.inverse).add_option(
+                &["-v"],
+                StoreTrue,
+                "Print lines with no match match (inverse search)",
+            );
+
+            parser
+                .refer(&mut lines)
+                .add_option(&["-A"], Store, "Print n lines after the match");
+
+            parser.parse_args_or_exit();
         }
+        args.context_lines = if lines > 0 { Some(lines) } else { None };
+
         args
     }
+
 }
 
 fn main() {
     let args = Args::parse();
 
     println!("{:?}", args);
+
+    if args.paths.is_empty() || args.regex.is_empty(){
+        println!("Regex pattern and Path are necessary");
+    }
 
     let regex = Regex::new(&args.regex).unwrap();
 
@@ -72,13 +123,4 @@ fn main() {
         // Take all paths from the command line arguments, and map the paths to create PathBufs
         args.paths.iter().map(PathBuf::from).collect()
     };
-
-    match args.mode.as_str() {
-        "r" => {
-            grep_rayon(paths, &regex);
-        }
-        _ => {
-            println!("oof");
-        }
-    }
 }
