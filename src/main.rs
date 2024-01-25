@@ -1,4 +1,4 @@
-use clap::Parser;
+use argparse::{ArgumentParser, List, Store, StoreTrue};
 use regex::bytes::Regex;
 use std::path::PathBuf;
 
@@ -6,7 +6,7 @@ mod grep;
 use grep::grep_rayon;
 mod result;
 
-#[derive(Parser, Debug)]
+#[derive(Debug)]
 struct Args {
     // mode to use
     mode: String,
@@ -16,17 +16,52 @@ struct Args {
 
     // The paths to be searched
     paths: Vec<String>,
+
+    // determine if it will be a search in a directory or a file
+    recursive: bool,
 }
 
-fn print_help() -> () {
-    println!("RGrep Implementation \n------------------------");
-    println!("Arguments");
-    println!("-r : search directory for regex pattern")
+impl Args {
+    //function to parse arguments from the command line and store them in a struct
+    fn parse() -> Args {
+        let mut args = Args {
+            mode: String::new(),
+            regex: String::new(),
+            paths: Vec::new(),
+            recursive: false,
+        };
+
+        {
+            let mut parser = ArgumentParser::new();
+            parser.set_description("A simple grep tool built uing Rust");
+
+            parser
+                .refer(&mut args.mode)
+                .add_argument("mode", Store, "yada yada")
+                .required();
+
+            parser
+                .refer(&mut args.regex)
+                .add_argument("regex pattern", Store, "Regex pattern to search for")
+                .required();
+
+            parser
+                .refer(&mut args.paths)
+                .add_argument("path", List, "Path to file or directory")
+                .required();
+
+            parser.parse_args_or_exit();
+
+        }
+        args
+    }
 }
 
 fn main() {
-    //Parse arguments, using the clap crate
-    let args: Args = Args::parse();
+    let args = Args::parse();
+
+    println!("{:?}", args);
+
     let regex = Regex::new(&args.regex).unwrap();
 
     // Get the paths that we should search
@@ -42,11 +77,8 @@ fn main() {
         "r" => {
             grep_rayon(paths, &regex);
         }
-        "h" => {
-            print_help();
-        }
         _ => {
-            print_help();
+            println!("oof");
         }
     }
 }

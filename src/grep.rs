@@ -1,9 +1,9 @@
+use crate::result::Result;
 use rayon::prelude::*;
+use regex::bytes::Regex;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
-use regex::bytes::Regex;
-use crate::result::Result;
 
 fn search_regex(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize>>) -> () {
     //make sure it is a valid entry point
