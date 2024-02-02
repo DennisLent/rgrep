@@ -1,6 +1,8 @@
 use std::fmt;
 use std::path::PathBuf;
 
+use crate::Args;
+
 // class used to envelope the result which will display the requested lines
 // this class is used for recursive search as it has to find the lines from the content
 #[derive(Debug)]
@@ -10,10 +12,15 @@ pub struct ResultDirectory<'a> {
     pub content: &'a Vec<u8>,
     pub path: &'a PathBuf,
     pub count: usize,
+    pub args: &'a Args,
 }
 
 impl<'a> fmt::Display for ResultDirectory<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+
+        // args.linecount print nothing
+        // others can go together
+
         //index for where a new line starts
         //search content to find \n and increment by 1 as we need the next character
         //if none are found use the beginning of the content

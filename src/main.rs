@@ -126,15 +126,8 @@ fn main() {
     };
 
     //match args to determine the function
-    match (
-        args.recursive,
-        args.filename_only,
-        args.linecount,
-        args.linenumbers,
-        args.inverse,
-        args.context_lines,
-    ) {
-        (true, _, _, _, _, _) => grep_rayon_directory(paths, &regex),
-        (_, _, _, _, _, _) => grep_rayon_file(paths, &regex),
+    match args.recursive{
+        true => grep_rayon_directory(paths, &regex, args),
+        false => grep_rayon_file(paths, &regex, args),
     }
 }

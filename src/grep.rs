@@ -1,4 +1,5 @@
 use crate::result::{ResultDirectory, ResultFile};
+use crate::Args;
 use rayon::prelude::*;
 use regex::bytes::Regex;
 use std::fs;
@@ -7,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
 // recursive search function for directories
-fn search_directory(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize>>) -> () {
+fn search_directory(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize>>, args: &Args) -> () {
     //make sure it is a valid entry point
     if let Ok(entries) = fs::read_dir(root_path) {
         //iterator to make it parallel
@@ -21,7 +22,7 @@ fn search_directory(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize>>) 
             if path.is_dir() {
                 let count_clone = Arc::clone(&count);
                 let regex_clone = regex.clone();
-                search_directory(&path, &regex_clone, &count_clone);
+                search_directory(&path, &regex_clone, &count_clone, &args);
             //single file so we can check the content
             } else {
                 if let Ok(content) = fs::read(&path) {
@@ -35,6 +36,7 @@ fn search_directory(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize>>) 
                             content: &content,
                             path: &path,
                             count: result_count,
+                            args: args,
                         };
                         //increment the counter
                         *count.lock().unwrap() += 1;
@@ -48,12 +50,16 @@ fn search_directory(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize>>) 
 }
 
 // overarching function for directory search in case there are more multiple directories
-pub fn grep_rayon_directory(pathvec: Vec<PathBuf>, regex: &Regex) -> () {
+pub fn grep_rayon_directory(pathvec: Vec<PathBuf>, regex: &Regex, args: Args) -> () {
     let count = Arc::new(Mutex::new(0));
 
     pathvec.par_iter().for_each(|path| {
-        search_directory(&path, &regex, &count);
+        search_directory(&path, &regex, &count, &args);
     });
+
+    if args.linecount{
+        println!("{} occured {:?} times", regex, count);
+    }
 }
 
 // Helper function to read lines from a file
@@ -82,7 +88,7 @@ pub fn grep_search_file(root_path: &Path, regex: &Regex, count: &Arc<Mutex<usize
     }
 }
 
-pub fn grep_rayon_file(pathvec: Vec<PathBuf>, regex: &Regex) -> () {
+pub fn grep_rayon_file(pathvec: Vec<PathBuf>, regex: &Regex, args: Args) -> () {
     let count = Arc::new(Mutex::new(0));
 
     pathvec.par_iter().for_each(|path| {
@@ -92,4 +98,8 @@ pub fn grep_rayon_file(pathvec: Vec<PathBuf>, regex: &Regex) -> () {
             println!("{:?} is a directory. Please use recursive search -r", path);
         }
     });
+
+    if args.linecount{
+        println!("{} occured {:?} times", regex, count);
+    }
 }
